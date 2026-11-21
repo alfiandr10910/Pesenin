@@ -1,0 +1,53 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - auth-service
+      - mahasiswa-service
+      - tenant-service
+      - pesanan-service
+
+  auth-service:
+    build: ./auth-service
+    env_file:
+      - ./auth-service/.env
+    environment:
+      MAHASISWA_SERVICE_URL: http://mahasiswa-service:8000
+      TENANT_SERVICE_URL: http://tenant-service:8000
+    depends_on:
+      - mahasiswa-service
+      - tenant-service
+
+  mahasiswa-service:
+    build: ./mahasiswa-service
+    env_file:
+      - ./mahasiswa-service/.env
+    volumes:
+      - mahasiswa_data:/app/data
+
+  tenant-service:
+    build: ./tenant-service
+    env_file:
+      - ./tenant-service/.env
+    volumes:
+      - tenant_data:/app/data
+
+  pesanan-service:
+    build: ./pesanan-service
+    env_file:
+      - ./pesanan-service/.env
+    environment:
+      TENANT_SERVICE_URL: http://tenant-service:8000
+    volumes:
+      - pesanan_data:/app/data
+    depends_on:
+      - tenant-service
+
+volumes:
+  mahasiswa_data:
+  tenant_data:
+  pesanan_data:
